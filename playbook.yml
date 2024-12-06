@@ -1,0 +1,150 @@
+---
+- name: Install OpenStack Keystone (Identity Service) on controller
+  hosts: controller
+  become: true
+  vars:
+    keystone_db_password: "password"
+    keystone_db_host: "192.168.56.102"
+    keystone_admin_token: "1202269fd19f8ce4a468025901e268da53bd5c4688b55d4d9d9a1342a541ef87"
+    
+  tasks:
+    - name: Install Keystone and dependencies
+      apt:
+        name:
+          - keystone
+          - python3-keystoneclient
+          - apache2
+          - libapache2-mod-wsgi-py3
+        state: present
+        update_cache: yes
+
+   # - name: Configure Keystone database
+    #  command: keystone-manage db_sync
+
+    - name: Start and enable Apache and Keystone
+      service:
+        name: apache2
+        state: started
+        enabled: true
+
+    - name: Configure Keystone API endpoint
+      template:
+        src: keystone_api_endpoint.j2
+        dest: /etc/keystone/keystone.conf
+
+    - name: Restart Apache to apply Keystone settings
+      service:
+        name: apache2
+        state: restarted
+
+- name: Install OpenStack Glance (Imaging Service) on controller
+  hosts: controller
+  become: true
+  vars:
+    glance_db_password: "password"
+    glance_db_host: "192.168.56.102"
+    glance_admin_token: "1202269fd19f8ce4a468025901e268da53bd5c4688b55d4d9d9a1342a541ef87"
+    glance_service_password: "password"
+  tasks:
+    - name: Install Glance and dependencies
+      apt:
+        name:
+          - glance
+          - python3-glanceclient
+        state: present
+        update_cache: yes
+
+#    - name: Configure Glance database
+#      command: glance-manage db_sync
+
+    - name: Start and enable Glance services
+      service:
+        name: glance-api
+        state: started
+        enabled: true
+
+    - name: Configure Glance API endpoint
+      template:
+        src: glance_api_endpoint.j2
+        dest: /etc/glance/glance-api.conf
+
+    - name: Restart Glance services
+      service:
+        name: glance-api
+        state: restarted
+
+- name: Install OpenStack Nova  on controller
+  hosts: controller
+  become: true
+  vars:
+    nova_db_password: "password"
+    nova_db_host: "192.168.56.102"
+    nova_admin_token: "1202269fd19f8ce4a468025901e268da53bd5c4688b55d4d9d9a1342a541ef87"
+    nova_service_password: "password"
+    
+  tasks:
+    - name: Install Nova and dependencies
+      apt:
+        name:
+          - nova-api
+          - nova-conductor
+          - nova-scheduler
+          - nova-compute
+          - python3-novaclient
+        state: present
+        update_cache: yes
+
+ #   - name: Configure Nova database
+ #     command: nova-manage db_sync
+
+    - name: Start and enable Nova services
+      service:
+        name: nova-api
+        state: started
+        enabled: true
+
+- name: Configure Nova API endpoint
+  hosts: controller
+  become: true
+  vars:
+    nova_db_password: "password"
+    nova_db_host: "192.168.56.102"
+    nova_admin_token: "1202269fd19f8ce4a468025901e268da53bd5c4688b55d4d9d9a1342a541ef87"
+    nova_service_password: "password"
+    rabbitmq_host: 192.168.56.102
+    rabbitmq_password: "password"
+    glance_host: 192.168.56.102
+    keystone_host: 192.168.56.102
+    nova_password: "password"
+    neutron_host: 192.168.56.102
+    
+  tasks:
+    - name: Configure Nova API endpoint
+      template:
+        src: nova_api_endpoint.j2
+        dest: /etc/nova/nova.conf
+
+    - name: Restart Nova services
+      service:
+        name: nova-api
+        state: restarted
+
+- name: Install OpenStack Nova on compute node
+  hosts: compute
+  become: true
+  tasks:
+    - name: Install Nova and dependencies
+      apt:
+        name:
+          - nova-compute
+        state: present
+        update_cache: yes
+
+    - name: Configure Nova compute service
+      command: nova-compute --config-file /etc/nova/nova.conf
+
+    - name: Start and enable Nova compute service
+      service:
+        name: nova-compute
+        state: started
+        enabled: true

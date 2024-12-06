@@ -1,0 +1,35 @@
+[DEFAULT]
+# The Glance API version
+api_version = 2
+
+# Glance API endpoints
+# These endpoints are typically used to define how clients will communicate with the Glance service
+public_endpoint = http://{{ ansible_host }}:9292
+admin_endpoint = http://{{ ansible_host }}:9292
+internal_endpoint = http://{{ ansible_host }}:9292
+
+# Database connection details
+sql_connection = mysql+pymysql://glance:{{ glance_db_password }}@{{ glance_db_host }}/glance
+
+# Set up the Glance image cache directory
+image_cache_dir = /var/lib/glance/images
+
+# Set up the backend store for images (e.g., file, swift, etc.)
+default_store = file
+
+# Glance registry settings
+registry_host = {{ ansible_host }}
+registry_port = 9191
+
+# Authentication settings
+auth_url = http://{{ ansible_host }}:5000/v3
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = glance
+password = {{ glance_service_password }}
+
+# Logging settings
+log_level = INFO
+log_dir = /var/log/glance
